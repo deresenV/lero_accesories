@@ -1,4 +1,3 @@
-# app/middlewares/services.py
 from aiogram import BaseMiddleware
 from typing import Callable, Awaitable, Dict, Any
 
