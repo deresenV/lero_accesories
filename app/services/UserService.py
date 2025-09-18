@@ -11,3 +11,11 @@ class UserService:
             user = await self.user_repo.create_user(user_id)
         return user
 
+    async def get_user_sites(self, user_id: int):
+        """
+        Возвращает все сайты пользователя
+        """
+        user = await self.user_repo.get_user_with_sites(user_id)
+        if user:
+            return user.sites
+        return []

@@ -7,6 +7,9 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram import F
 
+from app.services.SiteService import SiteService
+
+
 class AddWebSiteRouter(BaseRouter):
     def __init__(self):
         super().__init__()
@@ -44,7 +47,7 @@ class AddWebSiteRouter(BaseRouter):
         await state.set_state(AddSite.waiting_for_interval)
 
 
-    async def process_interval(self, message: Message, state: FSMContext):
+    async def process_interval(self, message: Message, state: FSMContext, site_service: SiteService):
         """
         3 stage
         Считывание, проверка и запись интервала опроса сервера | Отмена
@@ -69,7 +72,8 @@ class AddWebSiteRouter(BaseRouter):
 
         url = data["url"]
 
+        await site_service.create_site(user_id=str(message.from_user.id), url = url, interval=interval)
 
-        await message.answer(f"Сайт {url} добавлен с интервалом {interval} минут")
+        await message.answer(f"Сайт {url} добавлен с интервалом {interval} минут", reply_markup=start_keyboard)
 
         await state.clear()
