@@ -28,14 +28,19 @@ class AddWebSiteRouter(BaseRouter):
 
 
     async def process_interval(self,message: Message, state: FSMContext):
+        interval = message.text
+
         if not message.text.isnumeric():
             await message.answer("Время должно быть указано числом!")
+            return
+
+        if int(interval)<=0:
+            await message.answer("Время должно быть > 0")
             return
 
         data = await state.get_data()
 
         url = data["url"]
-        interval = message.text
 
         await message.answer(f"Сайт {url} добавлен с интервалом {interval} минут")
 
