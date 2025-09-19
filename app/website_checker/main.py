@@ -1,6 +1,0 @@
-class WebsiteChecker:
-    def __init__(self):
-        ...
-
-    async def check_website_by_url(self, url: str):
-        ...
