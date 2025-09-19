@@ -16,6 +16,7 @@ class UserWebsitesRouter(BaseRouter):
         super().__init__()
 
     def _register_handlers(self):
+        #TODO рефакторинг роутеров на логические группы
         self.router.message(F.text == "Мои сайты")(self.user_websites)
         self.router.callback_query(F.data.startswith("back_to_my_sites"))(self.back_to_sites)
         self.router.callback_query(F.data.startswith("site:"))(self.website_info)
@@ -27,6 +28,7 @@ class UserWebsitesRouter(BaseRouter):
         self.router.message(EditSite.update_data)(self.process_update_data)
         self.router.callback_query(F.data.startswith("delete_site:"))(self.remove_site_process)
         self.router.callback_query(F.data.startswith("delete_site_succesful:"))(self.remove_site_succesful)
+        self.router.callback_query(F.data.startswith("history_site:"))(self.history_site)
 
     async def user_websites(self, message: Message, user_service: UserService):
         sites = await user_service.get_user_sites(message.from_user.id)
@@ -51,11 +53,13 @@ class UserWebsitesRouter(BaseRouter):
         site_id = int(query.data.split(":")[1])
         site = await site_service.get_site_by_id(site_id)
         await query.message.edit_text(f"URL: {site.url}\nЧастота опроса: Каждые {site.check_interval} минут", reply_markup=site_info_keyboard(site_id))
+        await query.answer()
 
 
     async def edit_site(self, query: CallbackQuery):
         site_id = int(query.data.split(":")[1])
         await query.message.edit_text(f"Режим редактрирования", reply_markup=edit_site_keyboard(site_id))
+        await query.answer()
 
 
     async def edit_site_url(self, query: CallbackQuery, state: FSMContext):
@@ -79,13 +83,21 @@ class UserWebsitesRouter(BaseRouter):
         await state.update_data(id=site_id)
         await state.update_data(type="interval")
         await query.message.edit_text(f"Введите новый интервал проверки")
+        await query.answer()
         await state.set_state(EditSite.update_data)
 
     async def remove_site_process(self, query: CallbackQuery):
         site_id = int(query.data.split(":")[1])
         await query.message.edit_text(text="Удалить сайт?", reply_markup=remove_site_keyboard(site_id))
+        await query.answer()
 
     async def remove_site_succesful(self, query: CallbackQuery, site_service: SiteService):
         site_id = int(query.data.split(":")[1])
         answer = await site_service.delete_site(site_id)
         await query.message.edit_text(text=answer)
+        await query.answer()
+
+    async def history_site(self, query: CallbackQuery, site_service: SiteService):
+        await query.message.edit_text(text="История опроса сайта:")
+        await query.answer()
+        #TODO история опроса сайта
