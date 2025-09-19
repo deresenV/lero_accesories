@@ -2,6 +2,9 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.services.LogsService import LogsService
+
+
 class BackgroundTask:
     def __init__(self):
         from app.monitoring.SiteChecker import SiteChecker
@@ -11,6 +14,7 @@ class BackgroundTask:
         self.site_service: Optional[SiteService] = None
         self.notify_service: Optional[NotifyService] = None
         self.site_checker: Optional[SiteChecker] = None
+        self.logs_service: Optional[LogsService] = None
 
     def set_service(self, service):
         """Передаём SiteService для работы с БД и уведомлений"""
@@ -26,6 +30,7 @@ class BackgroundTask:
                 "next_check": now + timedelta(minutes=site.check_interval)
             }
 
+
     async def add_or_update_site(self, site):
         """Добавление нового сайта или обновление интервала существующего"""
         now = datetime.utcnow()
@@ -33,15 +38,22 @@ class BackgroundTask:
             "site": site,
             "next_check": now + timedelta(minutes=site.check_interval)
         }
+
+
     async def delete_site(self, site):
         ...
-    #TODO
-
-    async def check_site(self, site):
-        """Задача проверки сайта"""
-        ...
         #TODO
-        # await self.notify_service.send_msg(site)
+
+    async def processing_site(self, site):
+        """Обработка сайта"""
+        status_code, response_time, content = await self.site_checker.check_site(site.url)
+        if not status_code:
+            await self.notify_service.send_message(site, f"Возникла ошибка при обработке {site.url}.\nПроверьте правильность URL адресса")
+        elif status_code>=500:
+            await self.notify_service.send_message(site, f"Сайт: {site.url}\nВернул: {status_code} код.")
+
+        await self.logs_service.create_site_log(site, status_code, response_time)
+
 
     async def run(self):
         """Главный цикл проверки сайтов"""
@@ -49,6 +61,6 @@ class BackgroundTask:
             now = datetime.utcnow()
             for site_id, info in list(self.sites_schedule.items()):
                 if now >= info["next_check"]:
-                    await self.check_site(info["site"])
+                    await self.processing_site(info["site"])
                     info["next_check"] = now + timedelta(minutes=info["site"].check_interval)
             await asyncio.sleep(5)
