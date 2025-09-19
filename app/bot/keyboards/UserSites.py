@@ -1,9 +1,9 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from app.db.models import Site
 
-def user_sites(sites):
-    keyboard = [[KeyboardButton(text=site.url)] for site in sites]  # <-- берем url
-    user_sites_keyboard = ReplyKeyboardMarkup(
-        keyboard=keyboard,
-        resize_keyboard=True
-    )
-    return user_sites_keyboard
+
+def user_sites_inline(sites: list[Site]) -> InlineKeyboardMarkup:
+    buttons = [[InlineKeyboardButton(text=site.url,
+                                     callback_data=f"site:{site.id}")]
+               for site in sites]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
