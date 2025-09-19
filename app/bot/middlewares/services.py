@@ -5,11 +5,12 @@ from app.db.repositories.SiteRepository import SiteRepository
 from app.db.repositories.UserReposirory import UserRepository
 from app.services.SiteService import SiteService
 from app.services.UserService import UserService
-
+from app.monitoring.BackgroundTask import BackgroundTask
 
 class ServiceMiddleware(BaseMiddleware):
-    def __init__(self, sessionmaker):
+    def __init__(self, sessionmaker, checker: BackgroundTask):
         self.sessionmaker = sessionmaker
+        self.checker = checker
 
     async def __call__(
         self,
@@ -21,7 +22,9 @@ class ServiceMiddleware(BaseMiddleware):
             user_repo = UserRepository(session)
             site_repo = SiteRepository(session)
 
-            data["site_service"] = SiteService(site_repo)
+            site_service = SiteService(site_repo, self.checker)
+
+            data["site_service"] = site_service
             data["user_service"] = UserService(user_repo)
 
             return await handler(event, data)
