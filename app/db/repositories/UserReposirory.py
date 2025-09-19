@@ -8,11 +8,11 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_id(self, user_id: int) -> User | None:
+    async def get_user_by_id(self, user_id: int):
         """Получает пользователя по ID без сайтов"""
         return await self.session.get(User, user_id)
 
-    async def get_user_with_sites(self, user_id: int) -> User | None:
+    async def get_user_with_sites(self, user_id: int):
         """Получает пользователя с предзагруженными сайтами"""
         result = await self.session.execute(
             select(User)
