@@ -69,14 +69,6 @@ class UserWebsitesRouter(BaseRouter):
         await query.message.edit_text(f"Введите новый url")
         await state.set_state(EditSite.update_data)
 
-    async def process_update_data(self, message: Message, state: FSMContext, site_service: SiteService):
-        update_data = message.text
-        data = await state.get_data()
-        site_id = int(data["id"])
-        type = data["type"]
-        site = await site_service.edit_data(type, site_id, update_data)
-        await message.answer(f"URL: {site.url}\nЧастота опроса: Каждые {site.check_interval} минут", reply_markup=site_info_keyboard(site_id))
-
 
     async def edit_site_interval(self, query: CallbackQuery, state: FSMContext):
         site_id = int(query.data.split(":")[1])
@@ -85,6 +77,26 @@ class UserWebsitesRouter(BaseRouter):
         await query.message.edit_text(f"Введите новый интервал проверки")
         await query.answer()
         await state.set_state(EditSite.update_data)
+
+    async def process_update_data(self, message: Message, state: FSMContext, site_service: SiteService):
+        data = await state.get_data()
+        type = data["type"]
+        update_data = message.text
+        if type == "interval":
+            try:
+                interval = int(update_data)
+            except ValueError:
+                await message.answer("Время должно быть указано числом!")
+                return
+
+            if interval <= 0:
+                await message.answer("Время должно быть > 0")
+                return
+
+        site_id = int(data["id"])
+        site = await site_service.edit_data(type, site_id, update_data)
+        await message.answer(f"URL: {site.url}\nЧастота опроса: Каждые {site.check_interval} минут",
+                             reply_markup=site_info_keyboard(site_id))
 
     async def remove_site_process(self, query: CallbackQuery):
         site_id = int(query.data.split(":")[1])
