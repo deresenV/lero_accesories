@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.db.models import Site
 
 
@@ -18,7 +20,7 @@ class SiteRepository:
     async def get_site_by_id(self, id: int):
         return await self.session.get(Site, id)
 
-    async def update_site_url(self, site_id: int, new_url: str) -> Site | None:
+    async def update_site_url(self, site_id: int, new_url: str):
         """Обновляет URL сайта"""
         site = await self.get_site_by_id(site_id)
         if site:
@@ -26,7 +28,15 @@ class SiteRepository:
             await self.session.commit()
         return site
 
-    async def update_site_interval(self, site_id: int, new_interval: int) -> Site | None:
+
+    async def get_all_sites(self):
+        """Получить все сайты из базы данных"""
+        result = await self.session.execute(select(Site))
+        sites = result.scalars().all()
+        return sites
+
+
+    async def update_site_interval(self, site_id: int, new_interval: int):
         """Обновляет интервал опроса сайта"""
         site = await self.get_site_by_id(site_id)
         if site:
