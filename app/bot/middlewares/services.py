@@ -1,8 +1,10 @@
 from aiogram import BaseMiddleware
 from typing import Callable, Awaitable, Dict, Any
 
+from app.db.repositories.LogsRepository import LogsRepository
 from app.db.repositories.SiteRepository import SiteRepository
 from app.db.repositories.UserReposirory import UserRepository
+from app.services.LogsService import LogsService
 from app.services.SiteService import SiteService
 from app.services.UserService import UserService
 from app.monitoring.BackgroundTask import BackgroundTask
@@ -21,9 +23,10 @@ class ServiceMiddleware(BaseMiddleware):
         async with self.sessionmaker() as session:
             user_repo = UserRepository(session)
             site_repo = SiteRepository(session)
-
+            logs_repo = LogsRepository(session)
             site_service = SiteService(site_repo, self.checker)
 
+            data["logs_service"] = LogsService(logs_repo)
             data["site_service"] = site_service
             data["user_service"] = UserService(user_repo)
 
