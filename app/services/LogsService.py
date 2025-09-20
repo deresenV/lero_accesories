@@ -1,5 +1,7 @@
-from app.db.repositories.LogsRepository import LogsRepository
+from aiogram.types import BufferedInputFile
 
+from app.db.repositories.LogsRepository import LogsRepository
+import pytz
 
 class LogsService:
     def __init__(self, logs_repo: LogsRepository):
@@ -10,4 +12,50 @@ class LogsService:
 
 
     async def get_all_log_by_user_site(self, user_id, site_id):
-        return await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
+        site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
+
+        text_log = []
+        for log in site_logs:
+            moscow_tz = pytz.timezone("Europe/Moscow")
+
+            local_dt = log.timestamp.replace(tzinfo=pytz.utc).astimezone(moscow_tz)
+            formatted_time = local_dt.strftime("%d.%m.%y %H:%M")
+            try:
+                text_log.append(
+                    f"Время: {formatted_time} | "
+                    f"Статус: {log.status_code} | "
+                    f"Время ответа: {round(log.response_time_ms, 2)} ms"
+                )
+            except TypeError:
+                text_log.append(
+                    f"Время: {formatted_time} | "
+                    f"Статус: Нет ответа "
+                )
+        return text_log
+
+    async def format_log_for_file(self, user_id: int, site_id: int):
+        text_log = await self.get_all_log_by_user_site(user_id, site_id)
+
+        history_text = "История опроса сайта:\n\n" + "\n".join(text_log)
+        file = BufferedInputFile(
+            history_text.encode("utf-8"),  # переводим строку в байты
+            filename=f"site_{site_id}_logs.txt"
+        )
+
+
+        return file
+
+    async def get_statistic(self, user_id, site_id):
+        site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
+
+        if not site_logs:
+            return {"uptime": 0, "downtime": 0, "total_checks": 0}
+
+        total = len(site_logs)
+        success = sum(1 for log in site_logs if log.status_code and log.status_code < 400)
+        failed = total - success
+
+        uptime = round(success / total * 100, 2)
+        downtime = round(failed / total * 100, 2)
+
+        return uptime, downtime, total
