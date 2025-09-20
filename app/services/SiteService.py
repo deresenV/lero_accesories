@@ -29,9 +29,11 @@ class SiteService:
 
         return site
 
-    async def delete_site(self, id: int):
+    async def delete_site(self, id: int) -> str:
+        """Удаление сайта по его id"""
         site = await self.site_repo.delete_site(id)
         if site:
+            await self.task_checker.delete_site(id)
             return "Сайт удален"
         return "При удалении сайта произошла ошибка"
 
