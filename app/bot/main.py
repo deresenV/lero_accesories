@@ -37,7 +37,7 @@ async def main() -> None:
     await checker.load_sites()
     asyncio.create_task(checker.run())
 
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, drop_pending_updates=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
