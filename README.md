@@ -3,7 +3,7 @@
 
 
 ### Запуск:
-- **docker-compose up --build**
+- **docker-compose up --build** либо для фоновой работы: **docker-compose up -d --build**
 
 ### Архитектура:
 - app/
