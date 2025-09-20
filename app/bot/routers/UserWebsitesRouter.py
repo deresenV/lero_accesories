@@ -145,7 +145,7 @@ class UserWebsitesRouter(BaseRouter):
 
         await query.message.answer_photo(
             photo=FSInputFile(file),
-            caption="Статистика доступности и времени ответа за неделю",
+            caption="Статистика доступности и времени ответа",
         )
         await query.answer()
 
