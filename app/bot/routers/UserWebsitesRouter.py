@@ -134,6 +134,7 @@ class UserWebsitesRouter(BaseRouter):
             text_statistic = "Статистики нет"
 
         await query.message.edit_text(text=text_statistic, reply_markup=back_statistic_keyboard(site_id))
+        await query.answer()
 
 
     async def get_site_stats_graphic(self, query: CallbackQuery, logs_service: LogsService):
