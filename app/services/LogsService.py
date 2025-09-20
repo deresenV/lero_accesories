@@ -2,6 +2,8 @@ from aiogram.types import BufferedInputFile
 import pytz
 from datetime import datetime, timedelta
 
+from matplotlib import pyplot as plt
+
 from app.db.repositories.LogsRepository import LogsRepository
 
 
@@ -53,6 +55,38 @@ class LogsService:
         )
 
         return file
+
+    async def site_stats_graphic(self, user_id, site_id, file_path = "site_stats.png"):
+        logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
+        if not logs:
+            return None
+        timestamps = [await self.format_time_for_moscow(log.timestamp) for log in logs]
+        statuses = [1 if log.status_code and log.status_code < 400 else 0 for log in logs]
+        response_times = [log.response_time_ms if log.response_time_ms else 0 for log in logs]
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+        # --- График доступности ---
+        ax1.plot(timestamps, statuses, marker="o", linestyle="-", color="green")
+        ax1.set_ylim(-0.1, 1.1)
+        ax1.set_yticks([0, 1])
+        ax1.set_yticklabels(["Down", "Up"])
+        ax1.set_ylabel("Доступность")
+        ax1.set_title(f"Статистика сайта")
+
+        # --- График времени ответа ---
+        ax2.plot(timestamps, response_times, marker="o", linestyle="-", color="blue")
+        ax2.set_ylabel("Время ответа (ms)")
+        ax2.set_xlabel("Время")
+        ax2.grid(True)
+
+        fig.autofmt_xdate()
+        plt.tight_layout()
+        plt.savefig(file_path)
+        plt.close(fig)
+
+        return file_path
+
 
     async def _get_statistic(self, site_logs):
         if not site_logs:

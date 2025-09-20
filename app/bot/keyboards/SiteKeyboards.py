@@ -52,6 +52,7 @@ def history_keyboard(site_id: int) -> InlineKeyboardMarkup:
 def back_statistic_keyboard(site_id: int) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
+            [InlineKeyboardButton(text="Получить график", callback_data=f"get_graphic:{site_id}")],
             [InlineKeyboardButton(text="Назад", callback_data=f"site:{site_id}")]
         ]
     )

@@ -1,5 +1,5 @@
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram import F
 from app.bot.keyboards.SiteKeyboards import site_info_keyboard, edit_site_keyboard, remove_site_keyboard, \
     history_keyboard, back_statistic_keyboard
@@ -32,6 +32,7 @@ class UserWebsitesRouter(BaseRouter):
         self.router.callback_query(F.data.startswith("history_site:"))(self.history_site)
         self.router.callback_query(F.data.startswith("site_stats:"))(self.site_stats)
         self.router.callback_query(F.data.startswith("download_log:"))(self.download_log)
+        self.router.callback_query(F.data.startswith("get_graphic:"))(self.get_site_stats_graphic)
 
     async def user_websites(self, message: Message, user_service: UserService):
         """Получение сайтов пользователя"""
@@ -126,8 +127,27 @@ class UserWebsitesRouter(BaseRouter):
         """Статистика сайта"""
         site_id = int(query.data.split(":")[1])
         uptime, downtime, total = await logs_service.get_all_statistic(query.from_user.id, site_id)
-        text_statistic = f"Статистика сайта:\nUptime: {uptime}%\nDowntime: {downtime}%\nВсего проверок: {total}"
+        try:
+            total = int(total)
+            text_statistic = f"Статистика сайта:\nUptime: {uptime}%\nDowntime: {downtime}%\nВсего проверок: {total}"
+        except:
+            text_statistic = "Статистики нет"
+
         await query.message.edit_text(text=text_statistic, reply_markup=back_statistic_keyboard(site_id))
+
+
+    async def get_site_stats_graphic(self, query: CallbackQuery, logs_service: LogsService):
+        site_id = int(query.data.split(":")[1])
+        file = await logs_service.site_stats_graphic(query.from_user.id, site_id)
+        if not file:
+            await query.message.answer("Нет данных для графика.")
+            return
+
+        await query.message.answer_photo(
+            photo=FSInputFile(file),
+            caption="Статистика доступности и времени ответа за неделю",
+        )
+        await query.answer()
 
 
     async def history_site(self, query: CallbackQuery, logs_service: LogsService):
