@@ -13,16 +13,21 @@ class LogsService:
         await self.logs_repo.create_log(site, status_code, response_time)
 
 
+    async def format_time_for_moscow(self, time):
+        moscow_tz = pytz.timezone("Europe/Moscow")
+
+        local_dt = time.replace(tzinfo=pytz.utc).astimezone(moscow_tz)
+        formatted_time = local_dt.strftime("%d.%m.%y %H:%M")
+        return formatted_time
+
+
     async def get_all_log_by_user_site(self, user_id, site_id):
         """Преобразует и отдает логи для сайта пользователя"""
         site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
 
         text_log = []
         for log in site_logs:
-            moscow_tz = pytz.timezone("Europe/Moscow")
-
-            local_dt = log.timestamp.replace(tzinfo=pytz.utc).astimezone(moscow_tz)
-            formatted_time = local_dt.strftime("%d.%m.%y %H:%M")
+            formatted_time =  await self.format_time_for_moscow(log.timestamp)
             try:
                 text_log.append(
                     f"Время: {formatted_time} | "
