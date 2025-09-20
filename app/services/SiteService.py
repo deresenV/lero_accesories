@@ -40,6 +40,7 @@ class SiteService:
         site = await self.site_repo.delete_site(id)
         if site:
             await self.task_checker.delete_site(id)
+            await self.reporter.delete_site(id)
             return "Сайт удален"
         return "При удалении сайта произошла ошибка"
 
