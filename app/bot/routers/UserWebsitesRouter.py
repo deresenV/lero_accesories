@@ -1,12 +1,13 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram import F
-
-from app.bot.keyboards.SiteKeyboards import site_info_keyboard, edit_site_keyboard, remove_site_keyboard
+from app.bot.keyboards.SiteKeyboards import site_info_keyboard, edit_site_keyboard, remove_site_keyboard, \
+    history_keyboard, back_statistic_keyboard
 from app.bot.keyboards.StartKeyboard import start_keyboard
 from app.bot.keyboards.UserSites import user_sites_inline
 from app.bot.routers.BaseRouter import BaseRouter
 from app.bot.states.EditWebsiteState import EditSite
+from app.services.LogsService import LogsService
 from app.services.SiteService import SiteService
 from app.services.UserService import UserService
 
@@ -29,6 +30,8 @@ class UserWebsitesRouter(BaseRouter):
         self.router.callback_query(F.data.startswith("delete_site:"))(self.remove_site_process)
         self.router.callback_query(F.data.startswith("delete_site_succesful:"))(self.remove_site_succesful)
         self.router.callback_query(F.data.startswith("history_site:"))(self.history_site)
+        self.router.callback_query(F.data.startswith("site_stats:"))(self.site_stats)
+        self.router.callback_query(F.data.startswith("download_log:"))(self.download_log)
 
     async def user_websites(self, message: Message, user_service: UserService):
         sites = await user_service.get_user_sites(message.from_user.id)
@@ -109,7 +112,28 @@ class UserWebsitesRouter(BaseRouter):
         await query.message.edit_text(text=answer)
         await query.answer()
 
-    async def history_site(self, query: CallbackQuery, site_service: SiteService):
-        await query.message.edit_text(text="История опроса сайта:")
+
+
+    async def site_stats(self, query: CallbackQuery, logs_service: LogsService):
+        site_id = int(query.data.split(":")[1])
+        uptime, downtime, total = await logs_service.get_statistic(query.from_user.id, site_id)
+        text_statistic = f"Статистика сайта:\nUptime: {uptime}%\nDowntime: {downtime}%\nВсего проверок: {total}"
+        await query.message.edit_text(text=text_statistic, reply_markup=back_statistic_keyboard(site_id))
+
+
+    async def history_site(self, query: CallbackQuery, logs_service: LogsService):
+        site_id = int(query.data.split(":")[1])
+
+        text_log = await logs_service.get_all_log_by_user_site(query.from_user.id, site_id)
+
+        history_text = "История опроса сайта(Последние 10 опросов):\n\n" + "\n".join(text_log[-10:])
+
+        await query.message.edit_text(text=history_text, reply_markup=history_keyboard(site_id))
         await query.answer()
-        #TODO история опроса сайта
+
+    async def download_log(self, query: CallbackQuery, logs_service: LogsService):
+        site_id = int(query.data.split(":")[1])
+
+        file = await logs_service.format_log_for_file(query.from_user.id, site_id)
+        await query.message.answer_document(file)
+        await query.answer()
