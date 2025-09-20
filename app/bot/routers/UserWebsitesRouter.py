@@ -125,7 +125,7 @@ class UserWebsitesRouter(BaseRouter):
     async def site_stats(self, query: CallbackQuery, logs_service: LogsService):
         """Статистика сайта"""
         site_id = int(query.data.split(":")[1])
-        uptime, downtime, total = await logs_service.get_statistic(query.from_user.id, site_id)
+        uptime, downtime, total = await logs_service.get_all_statistic(query.from_user.id, site_id)
         text_statistic = f"Статистика сайта:\nUptime: {uptime}%\nDowntime: {downtime}%\nВсего проверок: {total}"
         await query.message.edit_text(text=text_statistic, reply_markup=back_statistic_keyboard(site_id))
 

@@ -12,6 +12,7 @@ from app.monitoring.SiteChecker import SiteChecker
 from app.services.LogsService import LogsService
 from app.services.NotifyService import NotifyService
 from app.services.SiteService import SiteService
+from app.services.WeekReporterService import WeekReporter
 
 dp = Dispatcher()
 
@@ -24,21 +25,27 @@ async def main() -> None:
     notify_service = NotifyService(bot=bot) # Сервис уведомлений
     site_checker = SiteChecker()  # Модуль опроса сайтов
 
-    #Сессия для мониторинга
+    #Сессия для мониторинга и еженедельной отчетности
     async with AsyncSessionLocal() as session:
         site_repo = SiteRepository(session)
-        site_service = SiteService(site_repo, background_responses_monitoring)
+        site_service = SiteService(site_repo, background_responses_monitoring, None)
         background_responses_monitoring.set_service(site_service)
         background_responses_monitoring.notify_service = notify_service
         background_responses_monitoring.site_checker = site_checker
         logs_repo = LogsRepository(session)
-        background_responses_monitoring.logs_service = LogsService(logs_repo)
+        logs_service = LogsService(logs_repo)
+        background_responses_monitoring.logs_service = logs_service
+
+        week_reporter = WeekReporter(site_service, logs_service, notify_service)
 
 
-    dp.update.middleware(ServiceMiddleware(AsyncSessionLocal, background_responses_monitoring))
+
+    dp.update.middleware(ServiceMiddleware(AsyncSessionLocal, background_responses_monitoring, week_reporter))
 
     await background_responses_monitoring.load_sites() #Подгрузка сайтов из бд в очередь опроса
+    await week_reporter.load_sites()
     asyncio.create_task(background_responses_monitoring.run())
+    asyncio.create_task(week_reporter.run())
 
     await dp.start_polling(bot, drop_pending_updates=True)
 

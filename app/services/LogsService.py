@@ -1,5 +1,6 @@
 from aiogram.types import BufferedInputFile
 import pytz
+from datetime import datetime, timedelta
 
 from app.db.repositories.LogsRepository import LogsRepository
 
@@ -53,10 +54,7 @@ class LogsService:
 
         return file
 
-    async def get_statistic(self, user_id, site_id):
-        """Получение и преобразование статистики сайта пользователя"""
-        site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
-
+    async def _get_statistic(self, site_logs):
         if not site_logs:
             return {"uptime": 0, "downtime": 0, "total_checks": 0}
 
@@ -68,3 +66,16 @@ class LogsService:
         downtime = round(failed / total * 100, 2)
 
         return uptime, downtime, total
+
+
+    async def get_all_statistic(self, user_id, site_id):
+        """Получение и преобразование статистики сайта пользователя"""
+        site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
+        return await self._get_statistic(site_logs)
+
+
+    async def get_week_ago_statistics(self, site_id, user_id):
+        now = datetime.utcnow()
+        week_ago = now - timedelta(days=7)
+        logs = await self.logs_repo.get_time_ago_logs_for_site(week_ago, site_id, user_id)
+        return await self._get_statistic(logs)

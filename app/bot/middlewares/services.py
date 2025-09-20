@@ -10,9 +10,10 @@ from app.services.UserService import UserService
 from app.monitoring.BackgroundResponses import BackgroundResponses
 
 class ServiceMiddleware(BaseMiddleware):
-    def __init__(self, sessionmaker, checker: BackgroundResponses):
+    def __init__(self, sessionmaker, checker: BackgroundResponses, reporter):
         self.sessionmaker = sessionmaker
         self.checker = checker
+        self.reporter = reporter
 
     async def __call__(
         self,
@@ -24,7 +25,8 @@ class ServiceMiddleware(BaseMiddleware):
             user_repo = UserRepository(session)
             site_repo = SiteRepository(session)
             logs_repo = LogsRepository(session)
-            site_service = SiteService(site_repo, self.checker)
+
+            site_service = SiteService(site_repo, self.checker, self.reporter)
 
             #DI
             data["logs_service"] = LogsService(logs_repo)

@@ -27,3 +27,14 @@ Log.site_id == site_id,
         result = await self.session.execute(site_logs)
         return result.scalars().all()
 
+
+    async def get_time_ago_logs_for_site(self, time_ago, site_id, user_id):
+        site_logs = (
+            select(Log)
+            .where(Log.site_id == site_id)
+            .where(Log.author_id == user_id)
+            .where(Log.timestamp >= time_ago)
+        )
+        result = await self.session.execute(site_logs)
+        logs = result.scalars().all()
+        return logs
