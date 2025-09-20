@@ -7,10 +7,10 @@ from app.db.repositories.UserReposirory import UserRepository
 from app.services.LogsService import LogsService
 from app.services.SiteService import SiteService
 from app.services.UserService import UserService
-from app.monitoring.BackgroundTask import BackgroundTask
+from app.monitoring.BackgroundResponses import BackgroundResponses
 
 class ServiceMiddleware(BaseMiddleware):
-    def __init__(self, sessionmaker, checker: BackgroundTask):
+    def __init__(self, sessionmaker, checker: BackgroundResponses):
         self.sessionmaker = sessionmaker
         self.checker = checker
 
@@ -26,6 +26,7 @@ class ServiceMiddleware(BaseMiddleware):
             logs_repo = LogsRepository(session)
             site_service = SiteService(site_repo, self.checker)
 
+            #DI
             data["logs_service"] = LogsService(logs_repo)
             data["site_service"] = site_service
             data["user_service"] = UserService(user_repo)

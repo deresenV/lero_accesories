@@ -6,6 +6,7 @@ class UserService:
         self.user_repo = user_repo
 
     async def get_or_create_user(self, user_id: int):
+        """Создает пользователя если того не было"""
         user = await self.user_repo.get_user_by_id(user_id)
         if not user:
             user = await self.user_repo.create_user(user_id)

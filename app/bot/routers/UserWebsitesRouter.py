@@ -34,6 +34,7 @@ class UserWebsitesRouter(BaseRouter):
         self.router.callback_query(F.data.startswith("download_log:"))(self.download_log)
 
     async def user_websites(self, message: Message, user_service: UserService):
+        """Получение сайтов пользователя"""
         sites = await user_service.get_user_sites(message.from_user.id)
 
         if sites:
@@ -42,6 +43,7 @@ class UserWebsitesRouter(BaseRouter):
             await message.answer("У вас нет сайтов", reply_markup=start_keyboard)
 
     async def back_to_sites(self, query: CallbackQuery, user_service: UserService):
+        """callback возврат на сайты пользователя"""
         sites = await user_service.get_user_sites(query.from_user.id)
 
         if sites:
@@ -53,6 +55,7 @@ class UserWebsitesRouter(BaseRouter):
 
 
     async def website_info(self, query: CallbackQuery, site_service: SiteService):
+        """Основная информация сайта"""
         site_id = int(query.data.split(":")[1])
         site = await site_service.get_site_by_id(site_id)
         await query.message.edit_text(f"URL: {site.url}\nЧастота опроса: Каждые {site.check_interval} минут", reply_markup=site_info_keyboard(site_id))
@@ -60,12 +63,14 @@ class UserWebsitesRouter(BaseRouter):
 
 
     async def edit_site(self, query: CallbackQuery):
+        """Редактирование параметров сайта"""
         site_id = int(query.data.split(":")[1])
         await query.message.edit_text(f"Режим редактрирования", reply_markup=edit_site_keyboard(site_id))
         await query.answer()
 
 
     async def edit_site_url(self, query: CallbackQuery, state: FSMContext):
+        """Редактирование url"""
         site_id = int(query.data.split(":")[1])
         await state.update_data(id=site_id)
         await state.update_data(type="url")
@@ -74,6 +79,7 @@ class UserWebsitesRouter(BaseRouter):
 
 
     async def edit_site_interval(self, query: CallbackQuery, state: FSMContext):
+        """Редактирование интервала опроса"""
         site_id = int(query.data.split(":")[1])
         await state.update_data(id=site_id)
         await state.update_data(type="interval")
@@ -82,6 +88,7 @@ class UserWebsitesRouter(BaseRouter):
         await state.set_state(EditSite.update_data)
 
     async def process_update_data(self, message: Message, state: FSMContext, site_service: SiteService):
+        """Обновление и валидация данных"""
         data = await state.get_data()
         type = data["type"]
         update_data = message.text
@@ -102,19 +109,21 @@ class UserWebsitesRouter(BaseRouter):
                              reply_markup=site_info_keyboard(site_id))
 
     async def remove_site_process(self, query: CallbackQuery):
+        """Защита от случайного удаления сайта"""
         site_id = int(query.data.split(":")[1])
         await query.message.edit_text(text="Удалить сайт?", reply_markup=remove_site_keyboard(site_id))
         await query.answer()
 
     async def remove_site_succesful(self, query: CallbackQuery, site_service: SiteService):
+        """Удаление сайта"""
         site_id = int(query.data.split(":")[1])
         answer = await site_service.delete_site(site_id)
         await query.message.edit_text(text=answer)
         await query.answer()
 
 
-
     async def site_stats(self, query: CallbackQuery, logs_service: LogsService):
+        """Статистика сайта"""
         site_id = int(query.data.split(":")[1])
         uptime, downtime, total = await logs_service.get_statistic(query.from_user.id, site_id)
         text_statistic = f"Статистика сайта:\nUptime: {uptime}%\nDowntime: {downtime}%\nВсего проверок: {total}"
@@ -122,6 +131,7 @@ class UserWebsitesRouter(BaseRouter):
 
 
     async def history_site(self, query: CallbackQuery, logs_service: LogsService):
+        """История опроса сайта"""
         site_id = int(query.data.split(":")[1])
 
         text_log = await logs_service.get_all_log_by_user_site(query.from_user.id, site_id)
@@ -132,6 +142,7 @@ class UserWebsitesRouter(BaseRouter):
         await query.answer()
 
     async def download_log(self, query: CallbackQuery, logs_service: LogsService):
+        """Скачать историю сайта"""
         site_id = int(query.data.split(":")[1])
 
         file = await logs_service.format_log_for_file(query.from_user.id, site_id)

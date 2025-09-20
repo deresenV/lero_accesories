@@ -5,7 +5,7 @@ from typing import Optional
 from app.services.LogsService import LogsService
 
 
-class BackgroundTask:
+class BackgroundResponses:
     def __init__(self):
         from app.monitoring.SiteChecker import SiteChecker
         from app.services.NotifyService import NotifyService

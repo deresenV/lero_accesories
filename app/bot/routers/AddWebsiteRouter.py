@@ -69,11 +69,9 @@ class AddWebSiteRouter(BaseRouter):
             return
 
         data = await state.get_data()
-
         url = data["url"]
 
         await site_service.create_site(user_id=str(message.from_user.id), url = url, interval=interval)
 
         await message.answer(f"Сайт {url} добавлен с интервалом {interval} минут", reply_markup=start_keyboard)
-
         await state.clear()

@@ -8,6 +8,7 @@ class SiteRepository:
         self.session = session
 
     async def create_site(self, user_id: str, url: str, interval: int):
+        """Создать сайт"""
         site = Site(
             telegram_id_author = user_id,
             url = url,
@@ -18,6 +19,7 @@ class SiteRepository:
         return site
 
     async def get_site_by_id(self, id: int):
+        """Получить сайт по id"""
         return await self.session.get(Site, id)
 
     async def update_site_url(self, site_id: int, new_url: str):

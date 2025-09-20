@@ -17,5 +17,6 @@ class StartRouter(BaseRouter):
     async def start_command(self,
                             message: Message,
                             user_service: UserService):
+        """Обработка и создание нового пользователя на команде /start"""
         user = await user_service.get_or_create_user(message.from_user.id)
         await message.answer("Воспользуйтесь меню для продолжения", reply_markup=start_keyboard)

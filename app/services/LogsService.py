@@ -1,17 +1,20 @@
 from aiogram.types import BufferedInputFile
+import pytz
 
 from app.db.repositories.LogsRepository import LogsRepository
-import pytz
+
 
 class LogsService:
     def __init__(self, logs_repo: LogsRepository):
         self.logs_repo = logs_repo
 
     async def create_site_log(self, site, status_code, response_time):
+        """Создает лог для сайта пользователя"""
         await self.logs_repo.create_log(site, status_code, response_time)
 
 
     async def get_all_log_by_user_site(self, user_id, site_id):
+        """Преобразует и отдает логи для сайта пользователя"""
         site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
 
         text_log = []
@@ -34,6 +37,7 @@ class LogsService:
         return text_log
 
     async def format_log_for_file(self, user_id: int, site_id: int):
+        """Форматирование лога в файл"""
         text_log = await self.get_all_log_by_user_site(user_id, site_id)
 
         history_text = "История опроса сайта:\n\n" + "\n".join(text_log)
@@ -42,10 +46,10 @@ class LogsService:
             filename=f"site_{site_id}_logs.txt"
         )
 
-
         return file
 
     async def get_statistic(self, user_id, site_id):
+        """Получение и преобразование статистики сайта пользователя"""
         site_logs = await self.logs_repo.get_all_log_by_user_site(user_id, site_id)
 
         if not site_logs:
