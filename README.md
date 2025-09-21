@@ -3,6 +3,9 @@
 
 
 ### Запуск:
+- Клонировать репозиторий
+- mv .env-template .env
+- Ввести токен бота в .env
 - **docker-compose up --build** либо для фоновой работы: **docker-compose up -d --build**
 
 ### Архитектура:
